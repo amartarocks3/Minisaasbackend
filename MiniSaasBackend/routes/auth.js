@@ -6,54 +6,46 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 const JWT_EXPIRES_IN = '1d';
 
-function createTokenAndSetCookie(res, user) {
-  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-    sameSite: 'lax',
-  });
+// Helper to generate JWT token using jsonwebtoken
+function generateToken(user) {
+  // Payload includes user ID and email
+  const payload = { id: user._id, email: user.email };
+  // Sign the token with secret and expiry time
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
-// Signup
+// Signup route
 router.post('/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: 'Email already registered.' });
+    if (existingUser) return res.status(400).json({ error: 'Email already registered' });
 
     const user = new User({ name, email, password });
     await user.save();
 
-    createTokenAndSetCookie(res, user);
-    res.status(201).json({ user: { id: user._id, name, email } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const token = generateToken(user);
+    res.status(201).json({ token, user: { id: user._id, name, email } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Login
+// Login route
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials.' });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials.' });
+    const isValid = await user.comparePassword(password);
+    if (!isValid) return res.status(400).json({ error: 'Invalid credentials' });
 
-    createTokenAndSetCookie(res, user);
-    res.json({ user: { id: user._id, name: user.name, email } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const token = generateToken(user);
+    res.json({ token, user: { id: user._id, name: user.name, email } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-});
-
-// Logout
-router.post('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.json({ message: 'Logged out successfully.' });
 });
 
 module.exports = router;
