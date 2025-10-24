@@ -11,11 +11,20 @@ const PORT = process.env.PORT || 8000;
 const mongoUri = process.env.MONGODB_URI;
 
 app.use(express.json());
+const allowedOrigins = ['https://minisaas.onrender.com', 'http://localhost:3000'];
+
 app.use(cors({
-  origin: 'https://minisaas.onrender.com/', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-  credentials: true, // If you need to send cookies/auth headers
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 }));
+
 
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
