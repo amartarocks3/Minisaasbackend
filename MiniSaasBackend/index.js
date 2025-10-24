@@ -12,7 +12,7 @@ const mongoUri = process.env.MONGODB_URI;
 
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:3000', // Replace with your frontend URL
+  origin: 'https://minisaas.onrender.com/', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
   credentials: true, // If you need to send cookies/auth headers
 }));
