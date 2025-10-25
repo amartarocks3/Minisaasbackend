@@ -3,6 +3,28 @@ const router = express.Router();
 
 const Lead = require('../models/Lead');
 
+// GET /api/leads/stats → Get lead statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const totalLeads = await Lead.countDocuments();
+    
+    const newLeads = await Lead.countDocuments({ status: 'new' });
+    const contactedLeads = await Lead.countDocuments({ status: 'contacted' });
+    const qualifiedLeads = await Lead.countDocuments({ status: 'qualified' });
+    const lostLeads = await Lead.countDocuments({ status: 'lost' });
+
+    res.json({
+      total: totalLeads,
+      new: newLeads,
+      contacted: contactedLeads,
+      qualified: qualifiedLeads,
+      lost: lostLeads,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/leads → Fetch all leads
 router.get('/', async (req, res) => {
   try {
